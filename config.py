@@ -42,7 +42,13 @@ def save_config(config: dict):
 
 
 def get_bridge_ip() -> Optional[str]:
-    """Get configured bridge IP"""
+    """Get configured bridge IP (from env var or config file)"""
+    # Check environment variable first
+    bridge_ip = os.environ.get("HUE_BRIDGE_IP")
+    if bridge_ip:
+        return bridge_ip
+
+    # Fall back to config file
     config = load_config()
     return config.get("bridge_ip")
 
@@ -55,7 +61,13 @@ def set_bridge_ip(bridge_ip: str):
 
 
 def get_api_key() -> Optional[str]:
-    """Get configured API key"""
+    """Get configured API key (from env var or config file)"""
+    # Check environment variable first
+    api_key = os.environ.get("HUE_API_KEY")
+    if api_key:
+        return api_key
+
+    # Fall back to config file
     config = load_config()
     return config.get("api_key")
 
