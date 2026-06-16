@@ -1,6 +1,7 @@
-# Philips Hue Control System
+# Hue Control System
 
-A Python-based system for controlling Philips Hue lights with both a REST API daemon and a command-line interface suitable for scripting.
+An unofficial, Python-based control system **for Philips Hue** lights, with both
+a REST API daemon and a command-line interface suitable for scripting.
 
 ## Features
 
@@ -125,6 +126,27 @@ curl -X PUT http://localhost:8080/lights/1/state -H "Content-Type: application/j
 
 Configuration is stored in `~/.hue/config.json` with restrictive permissions (600).
 
+### Environment variable overrides
+
+For headless or automated deployments (systemd, cron, containers, CI), the
+bridge IP and API key can be supplied via environment variables instead of the
+interactive `setup` flow. When set, these take **precedence** over the config
+file:
+
+| Variable         | Overrides             |
+| ---------------- | --------------------- |
+| `HUE_BRIDGE_IP`  | `bridge_ip` in config |
+| `HUE_API_KEY`    | `api_key` in config   |
+
+```bash
+export HUE_BRIDGE_IP=192.168.1.42
+export HUE_API_KEY=your-hue-api-key
+./daemon.py --host 0.0.0.0 --port 8080
+```
+
+With both set, no `~/.hue/config.json` is needed — neither the daemon nor the
+CLI will touch it for those values.
+
 ## Scripting Examples
 
 ### Bash script to toggle lights
@@ -156,4 +178,14 @@ print(response.json())
 
 ## License
 
-MIT
+MIT — see the [LICENSE](LICENSE) file.
+
+## Trademarks & Disclaimer
+
+This is an independent, unofficial project for use with Philips Hue lighting.
+It is **not affiliated with, authorized, endorsed by, or sponsored by** Signify
+N.V., Philips, or any of their subsidiaries or affiliates.
+
+"Philips" and "Hue" are trademarks of Signify Holding / Koninklijke Philips
+N.V. Those names are used here solely to identify the hardware this software is
+compatible with (nominative use); no claim is made to them.

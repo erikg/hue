@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Erik Greenwald
 """
 Philips Hue API Client Library
 Handles communication with the Hue Bridge

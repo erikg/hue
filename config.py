@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Erik Greenwald
 """
 Configuration management for Hue CLI/Daemon
 """

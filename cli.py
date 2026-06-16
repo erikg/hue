@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Erik Greenwald
 """
 Hue CLI - Command line interface for controlling Philips Hue lights
 Designed for scripting and automation
