@@ -96,7 +96,10 @@ def update_light_state(light_id):
 
         if not state:
             return jsonify({"error": "No state data provided"}), 400
-        
+
+        if not isinstance(state, dict):
+            return jsonify({"error": "state must be a JSON object"}), 400
+
         result = client.set_light_state(light_id, state)
         return jsonify({"success": True, "result": result})
     except (ValueError, ConnectionError):
@@ -113,7 +116,10 @@ def set_light_on(light_id):
         client = get_client()
         data = request.get_json(silent=True) or {}
         on = data.get("on", True)
-        
+
+        if not isinstance(on, bool):
+            return jsonify({"error": "on must be a JSON boolean"}), 400
+
         result = client.set_light_on(light_id, on)
         return jsonify({"success": True, "result": result})
     except (ValueError, ConnectionError):
@@ -130,7 +136,10 @@ def set_brightness(light_id):
         client = get_client()
         data = request.get_json(silent=True) or {}
         brightness = data.get("brightness", 128)
-        
+
+        if isinstance(brightness, bool) or not isinstance(brightness, int) or not (0 <= brightness <= 254):
+            return jsonify({"error": "brightness must be an integer between 0 and 254"}), 400
+
         result = client.set_light_brightness(light_id, brightness)
         return jsonify({"success": True, "result": result})
     except (ValueError, ConnectionError):
