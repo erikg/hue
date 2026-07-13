@@ -92,8 +92,8 @@ def update_light_state(light_id):
     """Update light state"""
     try:
         client = get_client()
-        state = request.get_json()
-        
+        state = request.get_json(silent=True)
+
         if not state:
             return jsonify({"error": "No state data provided"}), 400
         
@@ -111,7 +111,7 @@ def set_light_on(light_id):
     """Turn light on or off"""
     try:
         client = get_client()
-        data = request.get_json() or {}
+        data = request.get_json(silent=True) or {}
         on = data.get("on", True)
         
         result = client.set_light_on(light_id, on)
@@ -128,7 +128,7 @@ def set_brightness(light_id):
     """Set light brightness"""
     try:
         client = get_client()
-        data = request.get_json() or {}
+        data = request.get_json(silent=True) or {}
         brightness = data.get("brightness", 128)
         
         result = client.set_light_brightness(light_id, brightness)
