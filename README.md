@@ -99,9 +99,12 @@ Start the daemon:
 - `PUT /lights/<light_id>/on` - Turn light on/off (`{"on": true/false}`)
 - `PUT /lights/<light_id>/brightness` - Set brightness (`{"brightness": 0-254}`)
 - `GET /config/bridge` - Get bridge IP
-- `PUT /config/bridge` - Set bridge IP (`{"bridge_ip": "..."}`)
-- `GET /config/api_key` - Check if API key is configured
-- `PUT /config/api_key` - Set API key (`{"api_key": "..."}`)
+- `GET /config/api_key` - Check if API key is configured (returns a masked value)
+
+`/config/bridge` and `/config/api_key` are read-only (GET-only) — there is no
+HTTP endpoint to set the bridge IP or API key. Config is set via
+`~/.hue/config.json` or the `HUE_BRIDGE_IP` / `HUE_API_KEY` environment
+variables (see [Configuration](#configuration) below), never over the API.
 
 ### Example API Usage
 
