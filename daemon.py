@@ -66,6 +66,8 @@ def list_lights():
         client = get_client()
         lights = client.get_lights()
         return jsonify(lights)
+    except (ValueError, ConnectionError):
+        raise
     except Exception as e:
         logger.error(f"Error listing lights: {e}")
         return jsonify({"error": _GENERIC_ERROR}), 500
@@ -78,6 +80,8 @@ def get_light(light_id):
         client = get_client()
         light = client.get_light(light_id)
         return jsonify(light)
+    except (ValueError, ConnectionError):
+        raise
     except Exception as e:
         logger.error(f"Error getting light {light_id}: {e}")
         return jsonify({"error": _GENERIC_ERROR}), 500
@@ -95,6 +99,8 @@ def update_light_state(light_id):
         
         result = client.set_light_state(light_id, state)
         return jsonify({"success": True, "result": result})
+    except (ValueError, ConnectionError):
+        raise
     except Exception as e:
         logger.error(f"Error updating light {light_id}: {e}")
         return jsonify({"error": _GENERIC_ERROR}), 500
@@ -110,6 +116,8 @@ def set_light_on(light_id):
         
         result = client.set_light_on(light_id, on)
         return jsonify({"success": True, "result": result})
+    except (ValueError, ConnectionError):
+        raise
     except Exception as e:
         logger.error(f"Error setting light {light_id} on/off: {e}")
         return jsonify({"error": _GENERIC_ERROR}), 500
@@ -125,6 +133,8 @@ def set_brightness(light_id):
         
         result = client.set_light_brightness(light_id, brightness)
         return jsonify({"success": True, "result": result})
+    except (ValueError, ConnectionError):
+        raise
     except Exception as e:
         logger.error(f"Error setting brightness for light {light_id}: {e}")
         return jsonify({"error": _GENERIC_ERROR}), 500
