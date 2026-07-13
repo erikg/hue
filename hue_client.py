@@ -5,8 +5,8 @@ Philips Hue API Client Library
 Handles communication with the Hue Bridge
 """
 import requests
-import json
 from typing import Dict, List, Optional, Any
+from urllib.parse import quote
 
 
 class HueClient:
@@ -96,7 +96,7 @@ class HueClient:
         Returns:
             Light data dictionary
         """
-        return self._request("GET", f"lights/{light_id}")
+        return self._request("GET", f"lights/{quote(str(light_id), safe='')}")
     
     def set_light_state(self, light_id: str, state: Dict[str, Any]) -> List[Dict]:
         """
@@ -109,7 +109,7 @@ class HueClient:
         Returns:
             Response from bridge
         """
-        return self._request("PUT", f"lights/{light_id}/state", data=state)
+        return self._request("PUT", f"lights/{quote(str(light_id), safe='')}/state", data=state)
     
     def set_light_on(self, light_id: str, on: bool = True) -> List[Dict]:
         """Turn light on or off"""

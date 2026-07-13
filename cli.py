@@ -65,7 +65,7 @@ def setup():
         api_key = client.create_user()
         set_api_key(api_key)
         click.echo(f"\n✓ Setup complete! API key saved.")
-    except ValueError as e:
+    except (ValueError, ConnectionError) as e:
         click.echo(f"\n✗ Error: {e}", err=True)
         click.echo("Make sure you pressed the link button on the bridge.", err=True)
         sys.exit(1)
@@ -161,9 +161,9 @@ def brightness(light_id, brightness):
 
 @cli.command()
 @click.argument("light_id")
-@click.option("--hue", type=int, help="Hue (0-65535)")
-@click.option("--sat", type=int, help="Saturation (0-254)")
-@click.option("--bri", type=int, help="Brightness (0-254)")
+@click.option("--hue", type=click.IntRange(0, 65535), help="Hue (0-65535)")
+@click.option("--sat", type=click.IntRange(0, 254), help="Saturation (0-254)")
+@click.option("--bri", type=click.IntRange(0, 254), help="Brightness (0-254)")
 def color(light_id, hue, sat, bri):
     """Set light color (HSB)"""
     client = get_client()

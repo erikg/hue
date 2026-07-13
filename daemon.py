@@ -4,7 +4,6 @@
 """
 Hue Daemon - REST API server for controlling Philips Hue lights
 """
-import sys
 import threading
 from flask import Flask, jsonify, request
 from hue_client import HueClient

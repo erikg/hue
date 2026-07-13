@@ -38,11 +38,24 @@ def save_config(config: dict):
     """Save configuration to file"""
     ensure_config_dir()
 
-    # Create the file with restrictive permissions from the start (no
-    # world-readable window between creation and a later chmod)
-    fd = os.open(CONFIG_FILE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, 'w') as f:
-        json.dump(config, f, indent=2)
+    # Write to a temp file in the same dir (created with restrictive
+    # permissions from the start, no world-readable window) and atomically
+    # swap it into place. This avoids a truncated/corrupt config on a
+    # mid-write crash, and re-tightens perms even if CONFIG_FILE already
+    # existed with looser permissions (O_CREAT's mode arg is ignored for an
+    # existing file, but os.replace() carries the temp file's 0o600 over it).
+    tmp_file = str(CONFIG_FILE) + ".tmp"
+    fd = os.open(tmp_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        with os.fdopen(fd, 'w') as f:
+            json.dump(config, f, indent=2)
+        os.replace(tmp_file, CONFIG_FILE)
+    except Exception:
+        try:
+            os.remove(tmp_file)
+        except OSError:
+            pass
+        raise
 
 
 def get_bridge_ip() -> Optional[str]:
