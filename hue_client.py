@@ -51,7 +51,13 @@ class HueClient:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            raise ConnectionError(f"Failed to connect to Hue Bridge: {e}")
+            # requests embeds the full request URL in its exception text, and
+            # the API key lives in that URL path -- redact it so the key never
+            # leaks into the message (which may surface to a caller / operator).
+            detail = str(e)
+            if self.api_key:
+                detail = detail.replace(self.api_key, "<redacted>")
+            raise ConnectionError(f"Failed to connect to Hue Bridge: {detail}")
     
     def create_user(self, device_type: str = "hue-cli") -> str:
         """
@@ -73,8 +79,10 @@ class HueClient:
                     raise ValueError("Link button not pressed. Please press the link button on the bridge and try again.")
                 raise ValueError(f"Hue Bridge error: {error.get('description', 'Unknown error')}")
             elif "success" in response[0]:
-                return response[0]["success"]["username"]
-        
+                username = response[0]["success"].get("username")
+                if username:
+                    return username
+
         raise ValueError("Unexpected response from Hue Bridge")
     
     def get_lights(self) -> Dict[str, Dict]:

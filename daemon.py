@@ -49,7 +49,11 @@ def handle_value_error(e):
 
 @app.errorhandler(ConnectionError)
 def handle_connection_error(e):
-    return jsonify({"error": str(e)}), 503
+    # Detail (which can include bridge internals) goes to the log only; the
+    # client gets a generic message so the unauthenticated HTTP boundary never
+    # echoes exception text.
+    logger.error(f"Bridge connection error: {e}")
+    return jsonify({"error": "Cannot reach Hue Bridge"}), 503
 
 
 @app.route("/health", methods=["GET"])
