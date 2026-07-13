@@ -5,9 +5,10 @@
 Hue Daemon - REST API server for controlling Philips Hue lights
 """
 import sys
+import threading
 from flask import Flask, jsonify, request
 from hue_client import HueClient
-from config import get_bridge_ip, get_api_key, set_bridge_ip, set_api_key
+from config import get_bridge_ip, get_api_key
 import logging
 
 app = Flask(__name__)
@@ -16,25 +17,30 @@ logger = logging.getLogger(__name__)
 
 # Global client instance
 _client = None
+_client_lock = threading.Lock()
+
+# Generic message returned to clients on unexpected errors; details go to the log
+_GENERIC_ERROR = "Internal error"
 
 
 def get_client() -> HueClient:
     """Get or create Hue client instance"""
     global _client
-    
+
     bridge_ip = get_bridge_ip()
     api_key = get_api_key()
-    
+
     if not bridge_ip:
         raise ValueError("Bridge IP not configured. Use CLI to configure.")
-    
+
     if not api_key:
         raise ValueError("API key not configured. Use CLI to authenticate.")
-    
-    if _client is None or _client.bridge_ip != bridge_ip or _client.api_key != api_key:
-        _client = HueClient(bridge_ip, api_key)
-    
-    return _client
+
+    with _client_lock:
+        if _client is None or _client.bridge_ip != bridge_ip or _client.api_key != api_key:
+            _client = HueClient(bridge_ip, api_key)
+
+        return _client
 
 
 @app.errorhandler(ValueError)
@@ -62,7 +68,7 @@ def list_lights():
         return jsonify(lights)
     except Exception as e:
         logger.error(f"Error listing lights: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": _GENERIC_ERROR}), 500
 
 
 @app.route("/lights/<light_id>", methods=["GET"])
@@ -74,7 +80,7 @@ def get_light(light_id):
         return jsonify(light)
     except Exception as e:
         logger.error(f"Error getting light {light_id}: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": _GENERIC_ERROR}), 500
 
 
 @app.route("/lights/<light_id>/state", methods=["PUT"])
@@ -91,7 +97,7 @@ def update_light_state(light_id):
         return jsonify({"success": True, "result": result})
     except Exception as e:
         logger.error(f"Error updating light {light_id}: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": _GENERIC_ERROR}), 500
 
 
 @app.route("/lights/<light_id>/on", methods=["PUT"])
@@ -106,7 +112,7 @@ def set_light_on(light_id):
         return jsonify({"success": True, "result": result})
     except Exception as e:
         logger.error(f"Error setting light {light_id} on/off: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": _GENERIC_ERROR}), 500
 
 
 @app.route("/lights/<light_id>/brightness", methods=["PUT"])
@@ -121,37 +127,26 @@ def set_brightness(light_id):
         return jsonify({"success": True, "result": result})
     except Exception as e:
         logger.error(f"Error setting brightness for light {light_id}: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": _GENERIC_ERROR}), 500
 
 
-@app.route("/config/bridge", methods=["GET", "PUT"])
+# Config is read-only over HTTP: it comes from ~/.hue/config.json or the
+# HUE_BRIDGE_IP / HUE_API_KEY env vars, and get_client() hot-reloads it per
+# request. The former writable PUT variants were removed (2026-07-13) — they
+# were unused dead surface whose only distinctive effect was letting an
+# unauthenticated caller repoint the daemon (SSRF pivot) and overwrite the
+# stored credential. See AUDIT.md.
+@app.route("/config/bridge", methods=["GET"])
 def config_bridge():
-    """Get or set bridge IP"""
-    if request.method == "GET":
-        bridge_ip = get_bridge_ip()
-        return jsonify({"bridge_ip": bridge_ip})
-    else:
-        data = request.get_json() or {}
-        bridge_ip = data.get("bridge_ip")
-        if not bridge_ip:
-            return jsonify({"error": "bridge_ip required"}), 400
-        set_bridge_ip(bridge_ip)
-        return jsonify({"success": True, "bridge_ip": bridge_ip})
+    """Get bridge IP"""
+    return jsonify({"bridge_ip": get_bridge_ip()})
 
 
-@app.route("/config/api_key", methods=["GET", "PUT"])
+@app.route("/config/api_key", methods=["GET"])
 def config_api_key():
-    """Get or set API key"""
-    if request.method == "GET":
-        api_key = get_api_key()
-        return jsonify({"api_key": "***" if api_key else None})
-    else:
-        data = request.get_json() or {}
-        api_key = data.get("api_key")
-        if not api_key:
-            return jsonify({"error": "api_key required"}), 400
-        set_api_key(api_key)
-        return jsonify({"success": True})
+    """Get API key (masked)"""
+    api_key = get_api_key()
+    return jsonify({"api_key": "***" if api_key else None})
 
 
 def main():

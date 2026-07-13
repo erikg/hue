@@ -16,6 +16,8 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 def ensure_config_dir():
     """Ensure config directory exists"""
     CONFIG_DIR.mkdir(exist_ok=True, mode=0o700)
+    # mkdir's mode is ignored when the dir already exists, so tighten explicitly
+    os.chmod(CONFIG_DIR, 0o700)
 
 
 def load_config() -> dict:
@@ -35,12 +37,12 @@ def load_config() -> dict:
 def save_config(config: dict):
     """Save configuration to file"""
     ensure_config_dir()
-    
-    with open(CONFIG_FILE, 'w') as f:
+
+    # Create the file with restrictive permissions from the start (no
+    # world-readable window between creation and a later chmod)
+    fd = os.open(CONFIG_FILE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, 'w') as f:
         json.dump(config, f, indent=2)
-    
-    # Set restrictive permissions
-    os.chmod(CONFIG_FILE, 0o600)
 
 
 def get_bridge_ip() -> Optional[str]:
